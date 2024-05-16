@@ -10,10 +10,11 @@ public class DungeonCrawler extends JFrame implements KeyListener {
     private static final int TILE_SIZE = 50;
     private static final int NUM_TILES_X = WIDTH / TILE_SIZE;
     private static final int NUM_TILES_Y = HEIGHT / TILE_SIZE;
-    private static final int[][][] MAP = new int[NUM_TILES_X][NUM_TILES_Y][5];
+    private static final int NUM_FLOORS = 5;
+    private static final int[][][] MAP = new int[NUM_TILES_X][NUM_TILES_Y][NUM_FLOORS];
     private int currentFloor = 0;
-    private int playerX = 0;
-    private int playerY = 0;
+    private int playerX;
+    private int playerY;
 
     public DungeonCrawler() {
         setTitle("Dungeon Crawler");
@@ -28,12 +29,43 @@ public class DungeonCrawler extends JFrame implements KeyListener {
     }
 
     private void generateMap() {
-        Random random = new Random();
+        // Inicjalizacja mapy jako pusta
         for (int x = 0; x < NUM_TILES_X; x++) {
             for (int y = 0; y < NUM_TILES_Y; y++) {
-                for (int f = 0; f < 5; f++) {
-                    MAP[x][y][f] = random.nextInt(2); // 0 - Empty, 1 - Wall
+                for (int f = 0; f < NUM_FLOORS; f++) {
+                    MAP[x][y][f] = 1; // Wypełnienie mapy ścianami
                 }
+            }
+        }
+
+        // Generowanie poziomów labiryntu
+        Random random = new Random();
+        for (int f = 0; f < NUM_FLOORS; f++) {
+            dfs(random.nextInt(NUM_TILES_X), random.nextInt(NUM_TILES_Y), f);
+        }
+
+        // Ustawienie początkowej pozycji gracza wewnątrz labiryntu
+        do {
+            playerX = random.nextInt(NUM_TILES_X);
+            playerY = random.nextInt(NUM_TILES_Y);
+        } while (MAP[playerX][playerY][currentFloor] == 1); // Sprawdzenie, czy początkowa pozycja gracza nie jest ścianą
+    }
+
+    private void dfs(int x, int y, int floor) {
+        MAP[x][y][floor] = 0; // Oznaczenie bieżącego punktu jako drogi
+
+        // Przetasowanie sąsiadów
+        int[][] directions = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
+        Random random = new Random();
+        for (int i = 0; i < 4; i++) {
+            int index = random.nextInt(4);
+            int[] direction = directions[index];
+            int newX = x + direction[0] * 2;
+            int newY = y + direction[1] * 2;
+
+            if (newX > 0 && newX < NUM_TILES_X - 1 && newY > 0 && newY < NUM_TILES_Y - 1 && MAP[newX][newY][floor] == 1) {
+                MAP[x + direction[0]][y + direction[1]][floor] = 0; // Usunięcie ściany
+                dfs(newX, newY, floor); // Rekurencyjne wywołanie DFS
             }
         }
     }
@@ -43,6 +75,7 @@ public class DungeonCrawler extends JFrame implements KeyListener {
         super.paint(g);
         g.clearRect(0, 0, WIDTH, HEIGHT);
 
+        // Rysowanie bieżącego poziomu
         for (int x = 0; x < NUM_TILES_X; x++) {
             for (int y = 0; y < NUM_TILES_Y; y++) {
                 if (MAP[x][y][currentFloor] == 1) {
@@ -52,7 +85,7 @@ public class DungeonCrawler extends JFrame implements KeyListener {
             }
         }
 
-        // Draw player
+        // Rysowanie gracza
         g.setColor(Color.BLUE);
         g.fillRect(playerX * TILE_SIZE, playerY * TILE_SIZE, TILE_SIZE, TILE_SIZE);
     }
@@ -76,6 +109,18 @@ public class DungeonCrawler extends JFrame implements KeyListener {
             playerX--;
         } else if (keyCode == KeyEvent.VK_RIGHT && playerX < NUM_TILES_X - 1 && MAP[playerX + 1][playerY][currentFloor] != 1) {
             playerX++;
+        }
+
+        // Sprawdzenie, czy gracz dotarł do końca labiryntu na danym poziomie
+        if (playerX == NUM_TILES_X - 1 && playerY == NUM_TILES_Y - 1) {
+            if (currentFloor < NUM_FLOORS - 1) {
+                currentFloor++; // Przejście na następny poziom
+                generateMap(); // Wygenerowanie nowej mapy
+            } else {
+                // Jeśli gracz dotarł do końca ostatniego poziomu, wyświetl komunikat o ukończeniu gry
+                JOptionPane.showMessageDialog(this, "Gratulacje! Ukończyłeś grę!");
+                System.exit(0); // Zamknięcie gry
+            }
         }
 
         repaint();
