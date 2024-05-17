@@ -15,6 +15,8 @@ public class DungeonCrawler extends JFrame implements KeyListener {
     private int currentFloor = 0;
     private int playerX;
     private int playerY;
+    private int exitX;
+    private int exitY;
 
     public DungeonCrawler() {
         setTitle("Dungeon Crawler");
@@ -49,6 +51,26 @@ public class DungeonCrawler extends JFrame implements KeyListener {
             playerX = random.nextInt(NUM_TILES_X);
             playerY = random.nextInt(NUM_TILES_Y);
         } while (MAP[playerX][playerY][currentFloor] == 1); // Sprawdzenie, czy początkowa pozycja gracza nie jest ścianą
+
+        int exitCorner = random.nextInt(4);
+        switch (exitCorner) {
+            case 0: // Lewy górny róg
+                exitX = 0;
+                exitY = 0;
+                break;
+            case 1: // Prawy górny róg
+                exitX = NUM_TILES_X - 1;
+                exitY = 0;
+                break;
+            case 2: // Lewy dolny róg
+                exitX = 0;
+                exitY = NUM_TILES_Y - 1;
+                break;
+            case 3: // Prawy dolny róg
+                exitX = NUM_TILES_X - 1;
+                exitY = NUM_TILES_Y - 1;
+                break;
+        }
     }
 
     private void dfs(int x, int y, int floor) {
@@ -128,11 +150,9 @@ public class DungeonCrawler extends JFrame implements KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // Not used
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        // Not used
     }
 }
